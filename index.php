@@ -23,7 +23,6 @@ $host = grab_request_var("host", "");
 $host_id = "";
 $service_id = "";
 
-
 /////////////////////////////////////
 // Limit by host/service group HTML
 /////////////////////////////////////

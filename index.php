@@ -406,12 +406,12 @@ function service_class($code)
 $(document).ready(function(){
     $('#selectAllButton:button').toggle(function(){
         $('input:checkbox').attr('checked','checked');
-        $(this).val('Unselect All')
+        $(this).val('Unselect All');
     },function(){
         $('input:checkbox').removeAttr('checked');
         $(this).val('Select All');
-    })
-})
+    });
+});
 
 // Select all services by host
 $(document).ready(function() {

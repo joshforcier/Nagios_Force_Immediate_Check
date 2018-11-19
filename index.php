@@ -1,6 +1,7 @@
 <?php
-
-// Force Immediate Check Component
+//
+// Mass Immediate Check Component
+//
 
 require_once(dirname(__FILE__) . '/../../common.inc.php');
 
@@ -13,7 +14,7 @@ grab_request_vars();
 check_prereqs();
 check_authentication(false);
 
-$title = _("Force Immediate Check");
+$title = _("Mass Immediate Check");
 do_page_start(array("page_title" => $title), true);
 
 $hostgroup = grab_request_var("hostgroup", "");
@@ -30,7 +31,20 @@ $service_id = "";
 <form method="get">
     <div class="well report-options form-inline">
         <div class="input-group" style="margin-right: 10px;">
-            <label class="input-group-addon"><?php echo _("Limit To"); ?></label>                    
+            <label class="input-group-addon"><?php echo _("Limit To"); ?></label>
+            <select name="host" id="hostList" style="width: 150px;" class="form-control">
+                <option value=""><?php echo _("Host"); ?>:</option>
+                <?php
+                $args = array('brevity' => 1, 'orderby' => 'host_name:a');
+                $oxml = get_xml_host_objects($args);
+                if ($oxml) {
+                    foreach ($oxml->host as $hostobject) {
+                        $name = strval($hostobject->host_name);
+                        echo "<option value='" . $name . "' " . is_selected($host, $name) . ">$name</option>\n";
+                    }
+                }
+                ?>
+            </select>        
             <select name="hostgroup" id="hostgroupList" style="width: 150px;" class="form-control">
                 <option value=""><?php echo _("Hostgroup"); ?>:</option>
                 <?php
@@ -57,6 +71,9 @@ $service_id = "";
                 }
                 ?>
             </select>
+        </div>
+        <div class="input-group" style="margin-right: 10px;">
+            <label class="input-group-addon"><?php echo _("Status"); ?></label>
             <select name="selectstate" id="selectstate" style="width: 150px;" class="form-control">
                 <?php
                 echo "<option value='" . 'Show Problems' . "' " . is_selected($select_state, 'Show Problems') . ">Show Problems</option>";
@@ -76,6 +93,7 @@ $service_id = "";
 $select_state = grab_request_var("selectstate", "");
 $hostgroup = grab_request_var("hostgroup", "");
 $servicegroup = grab_request_var("servicegroup", "");
+$host = grab_request_var("host", "");
 
 $hosts = get_problem_hosts();
 $services = get_problem_services();
@@ -84,8 +102,12 @@ if ($select_state == 'Show Problems') {
     $hosts = get_problem_hosts();
     $services = get_problem_services();
 } else if ($select_state == 'Show All') {
-    $hosts = forceimmediatecheck_get_hosts();
-    $services = forceimmediatecheck_get_services();
+    $hosts = massimmediatecheck_get_hosts();
+    $services = massimmediatecheck_get_services();
+}
+
+if ($host != "") {
+    $hosts = get_host($host);
 }
 
 if ($hostgroup != "") {
@@ -95,6 +117,7 @@ if ($hostgroup != "") {
 if ($servicegroup != "") {
     $service_id = get_servicegroup_member_ids($servicegroup);
 }
+
 // hostgroup filter, get hosts by host_id
 if (!empty($host_id)) {
     $hosts = array_filter($hosts, function ($data) use ($host_id) {
@@ -107,11 +130,12 @@ if (!empty($service_id)) {
         { return array_filter($data, function($sub) use ($service_id)
             { return in_array($sub["service_id"], $service_id); });
     }, $services); 
+    echo '<pre>';print_r($services);echo '</pre>'; //testing
 }
 
-foreach ($filtered_services as $value) {
+foreach ($services as $value) {
     if (empty($value)) {
-        $hosts = ""; 
+        $hosts = "";
     }
 }
 
@@ -124,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 if (is_readonly_user(0)) {
     $html = _("You are not authorized to use this component.");
 } else {
-    $html = forceimmediatecheck_build_html($hosts, $services);
+    $html = massimmediatecheck_build_html($hosts, $services);
 }
 
 print $html;
@@ -169,10 +193,10 @@ function force_check()
     }
 }
 
-function forceimmediatecheck_build_html($hosts, $services)
+function massimmediatecheck_build_html($hosts, $services)
 {      
     $html = "
-    <h1>Force Immediate Check</h1>
+    <h1>Mass Immediate Check</h1>
     <div>Use this tool to force an immediate check on large groups of hosts/services.</div>
     <form id='form_masscheck' action='index.php' method='post'>
 
@@ -271,7 +295,26 @@ function feedback_html($msg, $error)
     return $feedback;
 }
 
-function forceimmediatecheck_get_hosts()
+function get_host($host)
+{
+    $backendargs["cmd"] = "gethoststatus";
+    $xml = get_xml_host_status($backendargs);
+
+    if ($xml) {
+        foreach ($xml->hoststatus as $x) {
+
+            $hosts["$host"] = array('host_state' => "$x->current_state", 
+                'host_name' => "$host",
+                'plugin_output' => "$x->status_text",
+                'last_check' => "$x->last_check",
+                'host_id' => "$x->host_id");
+        }
+    } 
+
+    return $hosts;
+}
+
+function massimmediatecheck_get_hosts()
 {
     $backendargs["cmd"] = "gethoststatus";
     $xml = get_xml_host_status($backendargs);
@@ -290,7 +333,7 @@ function forceimmediatecheck_get_hosts()
     return $hosts;
 }
 
-function forceimmediatecheck_get_services()
+function massimmediatecheck_get_services()
 {
     $backendargs["cmd"] = "getservicestatus";
     $xml = get_xml_service_status($backendargs);
@@ -327,7 +370,7 @@ function get_problem_hosts()
     }    
     // get all hosts(regardless of state) that have problem services
     $problem_services = get_problem_services();
-    $all_hosts = forceimmediatecheck_get_hosts();
+    $all_hosts = massimmediatecheck_get_hosts();
 
     if(isset($problem_services, $all_hosts)) {
         foreach ($problem_services as $value) {

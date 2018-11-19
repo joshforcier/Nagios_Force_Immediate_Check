@@ -130,7 +130,6 @@ if (!empty($service_id)) {
         { return array_filter($data, function($sub) use ($service_id)
             { return in_array($sub["service_id"], $service_id); });
     }, $services); 
-    echo '<pre>';print_r($services);echo '</pre>'; //testing
 }
 
 foreach ($services as $value) {

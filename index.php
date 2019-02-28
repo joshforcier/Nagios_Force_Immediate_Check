@@ -98,23 +98,23 @@ $host = grab_request_var("host", "");
 $hosts = get_problem_hosts();
 $services = get_problem_services();
 
-if ($select_state == 'Show Problems') {
+if ($select_state === 'Show Problems') {
     $hosts = get_problem_hosts();
     $services = get_problem_services();
-} else if ($select_state == 'Show All') {
+} else if ($select_state === 'Show All') {
     $hosts = massimmediatecheck_get_hosts();
     $services = massimmediatecheck_get_services();
 }
 
-if ($host != "") {
+if ($host !== "") {
     $hosts = get_host($host);
 }
 
-if ($hostgroup != "") {
+if ($hostgroup !== "") {
     $host_id = get_hostgroup_member_ids($hostgroup);
 }
 
-if ($servicegroup != "") {
+if ($servicegroup !== "") {
     $service_id = get_servicegroup_member_ids($servicegroup);
 }
 
@@ -138,7 +138,7 @@ foreach ($services as $value) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['forceCheckButton'])) {
         force_check();
     }
@@ -301,7 +301,6 @@ function get_host($host)
 
     if ($xml) {
         foreach ($xml->hoststatus as $x) {
-
             $hosts["$host"] = array('host_state' => "$x->current_state", 
                 'host_name' => "$host",
                 'plugin_output' => "$x->status_text",
@@ -320,7 +319,6 @@ function massimmediatecheck_get_hosts()
 
     if ($xml) {
         foreach ($xml->hoststatus as $x) {
-
             $hosts["$x->name"] = array('host_state' => "$x->current_state", 
                 'host_name' => "$x->name",
                 'plugin_output' => "$x->status_text",
@@ -358,8 +356,7 @@ function get_problem_hosts()
     $backendargs["current_state"] = "in:1,2";
     $xml = get_xml_host_status($backendargs);
     if ($xml) {
-        foreach ($xml->hoststatus as $x) {
-           
+        foreach ($xml->hoststatus as $x) {           
             $problem_hosts["$x->name"] = array('host_state' => "$x->current_state", 
                 'host_name' => "$x->name",
                 'plugin_output' => "$x->status_text",
@@ -371,10 +368,9 @@ function get_problem_hosts()
     $problem_services = get_problem_services();
     $all_hosts = massimmediatecheck_get_hosts();
 
-    if(isset($problem_services, $all_hosts)) {
+    if (isset($problem_services, $all_hosts)) {
         foreach ($problem_services as $value) {
             foreach ($value as $problem_services_host) {
-
                 $problem_host_name = $problem_services_host['host_name'];
                 $host_status = $all_hosts["$problem_host_name"]['host_state'];
                 $plugin_output = $all_hosts["$problem_host_name"]['plugin_output'];
